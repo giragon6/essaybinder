@@ -1,0 +1,18 @@
+{
+  "name": "essaybinder-backend",
+  "version": "1.0.0",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "5.1.0",
+    "cors": "^2.8.5",
+    "googleapis": "153.0.0",
+    "dotenv": "17.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
