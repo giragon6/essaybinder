@@ -20,7 +20,7 @@ export default function Login() {
 
   const checkCurrentUser = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/user`, {
+      const response = await fetch(`/api/auth/user`, {
         credentials: 'include'
       });
       

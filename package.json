@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "concurrently": "9.2.0"
+  },
+  "dependencies": {
+    "firebase-tools": "^14.11.1"
   }
 }

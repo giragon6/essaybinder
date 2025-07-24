@@ -1,24 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken'); 
 const axios = require('axios');
-
-const authenticateSession = (req, res, next) => {
-  const sessionToken = req.cookies.session;
-  
-  if (!sessionToken) {
-    return res.status(401).json({ error: 'No session' });
-  }
-
-  try {
-    const decoded = jwt.verify(sessionToken, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.clearCookie('session');
-    res.status(401).json({ error: 'Invalid session' });
-  }
-};
+const jwt = require('jsonwebtoken');
+const { authenticateSession } = require('../middleware/auth.middleware');
+const { storeUserToken, getUserToken } = require('../config/firebase');
 
 router.post('/exchange-code', async (req, res) => {
   try {
@@ -38,12 +23,22 @@ router.post('/exchange-code', async (req, res) => {
     const { OAuth2Client } = require('google-auth-library');
     const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
     
+    // Decode the token to see its audience before verification
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.decode(id_token);
+    
     const ticket = await client.verifyIdToken({
       idToken: id_token,
-      audience: process.env.GOOGLE_CLIENT_ID + '.apps.googleusercontent.com',
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
+    
+    if (refresh_token) {
+      await storeUserToken(payload.sub, {
+        refresh_token
+      });
+    }
     
     const sessionToken = jwt.sign(
       {
@@ -56,18 +51,18 @@ router.post('/exchange-code', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    res.cookie('refresh_token', refresh_token, {
+    res.cookie('access_token', access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
       sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days (ms)
+      maxAge: 60 * 60 * 1000 // 1hr
     });
 
     res.cookie('session', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours (ms)
+      maxAge: 24 * 60 * 60 * 1000 // 24hr
     });
 
     res.json({
@@ -79,7 +74,6 @@ router.post('/exchange-code', async (req, res) => {
         picture: payload.picture
       }
     });
-
   } catch (error) {
     console.error('Token exchange error:', error);
     res.status(400).json({ error: 'Token exchange failed' });
@@ -88,22 +82,39 @@ router.post('/exchange-code', async (req, res) => {
 
 router.post('/refresh-token', async (req, res) => {
   try {
-    const refreshToken = req.cookies.refresh_token;
+    const sessionToken = req.cookies.session;
     
-    if (!refreshToken) {
-      return res.status(401).json({ error: 'No refresh token' });
+    if (!sessionToken) {
+      return res.status(401).json({ error: 'No session token' });
+    }
+
+    const decoded = jwt.verify(sessionToken, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    const userToken = await getUserToken(userId);
+    
+    if (!userToken || !userToken.refreshToken) {
+      return res.status(401).json({ error: 'No refresh token found' });
     }
 
     const response = await axios.post('https://oauth2.googleapis.com/token', {
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      refresh_token: refreshToken,
+      refresh_token: userToken.refreshToken,
       grant_type: 'refresh_token'
     });
 
     const { access_token } = response.data;
     
-    res.json({ access_token });
+    // Store new access token in secure httpOnly cookie
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 1000 // 1 hour
+    });
+    
+    res.json({ success: true });
   } catch (error) {
     console.error('Token refresh error:', error);
     res.status(401).json({ error: 'Token refresh failed' });
@@ -116,7 +127,7 @@ router.get('/user', authenticateSession, (req, res) => {
 
 router.post('/logout', (req, res) => {
   res.clearCookie('session');
-  res.clearCookie('refresh_token');
+  res.clearCookie('access_token');
   res.json({ success: true });
 });
 
