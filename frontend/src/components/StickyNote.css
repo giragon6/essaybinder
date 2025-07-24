@@ -1,6 +1,3 @@
-/* Sticky Note CSS Effects */
-
-/* Text clamp utility for multiline truncation */
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -9,24 +6,23 @@
   overflow: hidden;
 }
 
-/* Paper texture for background */
-.paper-texture::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  opacity: 0.1;
-  background-image: 
-    radial-gradient(circle at 1px 1px, rgba(0,0,0,.1) 1px, transparent 0);
-  background-size: 20px 20px;
-  pointer-events: none;
-}
-
-/* Subtle shadow and rotation effects */
 .sticky-note {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  height: 100%;
+}
+
+.square {
+  width: 20vw;
+  height: 20vw;
+  min-width: 300px;
+  min-height: 300px;
+}
+
+.square:after {
+  content: '';
+  display: block;
+  padding-bottom: 100%;
 }
 
 .sticky-note:hover {
@@ -34,7 +30,6 @@
   box-shadow: 8px 8px 16px rgba(0,0,0,0.15) !important;
 }
 
-/* Custom scrollbar for tag management */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
@@ -53,7 +48,6 @@
   background: rgba(0,0,0,0.5);
 }
 
-/* Animation for flip effect */
 .flip-card {
   perspective: 1000px;
 }
@@ -82,7 +76,6 @@
   transform: rotateY(180deg);
 }
 
-/* Drag and drop effects */
 .essay-card {
   transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
   cursor: move;
@@ -96,7 +89,6 @@
   cursor: grabbing;
 }
 
-/* Smooth transitions for drag states */
 .essay-card.dragging {
   opacity: 0.5;
   transform: scale(0.95) rotate(5deg);

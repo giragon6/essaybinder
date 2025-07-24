@@ -55,19 +55,14 @@ export function Filters(props: FiltersProps ) {
 
   return (
     <>
-      <div className="mb-8">
+      <div className="mb-8 min-w-screen">
         <div className="flex items-center gap-4 mb-4">
-          {/* Tape roll on the left */}
           <div 
             className={`tape-roll ${showFilters ? 'spinning' : ''} tape-roll-size flex-shrink-0`}
             onClick={() => setShowFilters(!showFilters)}
           >
-            <div className="tape-roll-label">
-              {showFilters ? 'Close' : 'Filters'}
-            </div>
           </div>
 
-          {/* Active filters to the right */}
           <div className={`active-filters flex-grow ${!searchTerm && selectedTags.length === 0 && !minWordCount && !maxWordCount && !minCharCount && !maxCharCount && !selectedApplicationStatus ? 'empty' : ''}`}>
             {searchTerm && (
               <div className="tape-piece new-tape">

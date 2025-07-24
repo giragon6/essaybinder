@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateSession } = require('../middleware/auth.middleware');
-const { getEssays, getHealthCheck, addEssayByUrl, removeEssay, addTagToEssay, removeTagFromEssay, updateEssayTheme, updateEssayApplication, updateEssayNotes } = require('../controllers/essay.controller');
+const { getEssays, getHealthCheck, addEssayByUrl, removeEssay, addTagToEssay, removeTagFromEssay, updateEssayTheme, updateEssayApplication, updateEssayNotes } = require('../controllers/essay.controller.cached');
   
 router.get('/', authenticateSession, getEssays);
 router.get('/health', getHealthCheck); // Remove auth middleware for health check

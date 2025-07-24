@@ -1,11 +1,9 @@
 interface Essay {
   id: string;
   title: string;
-  content: string;
   characterCount: number;
   wordCount: number;
   tags: string[];
-  theme?: string;
   createdDate: string;
   lastModified: string;
   googleDocId: string;

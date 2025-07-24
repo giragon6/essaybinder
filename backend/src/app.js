@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser'); 
+const { initRedis } = require('./config/redis');
 require('dotenv').config();
 
 const app = express();
@@ -29,6 +30,18 @@ app.use('/auth', authRoutes);
 app.use('/essays', essayRoutes);
 app.use('/positions', positionRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Initialize Redis on startup
+const startServer = async () => {
+  try {
+    await initRedis();
+    console.log('Redis initialized successfully');
+  } catch (error) {
+    console.warn('Redis initialization failed, continuing without cache:', error.message);
+  }
+  
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+startServer();
