@@ -1,13 +1,29 @@
 import { useState } from "react";
 import type { EssayCardProps } from "../models/essayModels";
 
-export default function EssayCard({ essay, onAddTag, onRemoveEssay }: EssayCardProps) {
+export default function EssayCard({ essay, onAddTag, onRemoveTag, onRemoveEssay }: EssayCardProps) {
   const [newTag, setNewTag] = useState("");
+  const [isAddingTag, setIsAddingTag] = useState(false);
 
-  const handleAddTag = () => {
-    if (newTag.trim()) {
-      onAddTag(essay.id, newTag.trim());
+  const handleAddTag = async () => {
+    if (!newTag.trim()) return;
+    
+    setIsAddingTag(true);
+    try {
+      await onAddTag(essay.id, newTag.trim());
       setNewTag("");
+    } catch (error) {
+      console.error("Error adding tag:", error);
+    } finally {
+      setIsAddingTag(false);
+    }
+  };
+
+  const handleRemoveTag = async (tag: string) => {
+    try {
+      await onRemoveTag(essay.id, tag);
+    } catch (error) {
+      console.error("Error removing tag:", error);
     }
   };
 
@@ -38,26 +54,31 @@ export default function EssayCard({ essay, onAddTag, onRemoveEssay }: EssayCardP
         </div>
       </div>
 
-      {essay.theme && (
-        <div className="mb-2">
-          <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm">
-            Theme: {essay.theme}
-          </span>
-        </div>
-      )}
-
       <div className="mb-3">
+        {/* Display tags */}
         <div className="flex flex-wrap gap-1 mb-2">
-          {essay.tags.map((tag) => (
-            <span 
-              key={tag}
-              className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
-            >
-              {tag}
-            </span>
-          ))}
+          {essay.tags && essay.tags.length > 0 ? (
+            essay.tags.map((tag, index) => (
+              <span 
+                key={`${tag}-${index}`}
+                className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm flex items-center gap-1"
+              >
+                {tag}
+                <button
+                  onClick={() => handleRemoveTag(tag)}
+                  className="text-blue-600 hover:text-blue-800 ml-1"
+                  title="Remove tag"
+                >
+                  ×
+                </button>
+              </span>
+            ))
+          ) : (
+            <span className="text-gray-500 text-sm italic">No tags</span>
+          )}
         </div>
         
+        {/* Add tag form */}
         <div className="flex gap-2">
           <input
             type="text"
@@ -66,19 +87,22 @@ export default function EssayCard({ essay, onAddTag, onRemoveEssay }: EssayCardP
             onChange={(e) => setNewTag(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
             className="flex-1 p-1 border border-gray-300 rounded text-sm"
+            disabled={isAddingTag}
           />
           <button
             onClick={handleAddTag}
-            className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+            className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 disabled:opacity-50"
+            disabled={!newTag.trim() || isAddingTag}
           >
-            Add
+            {isAddingTag ? 'Adding...' : 'Add Tag'}
           </button>
         </div>
       </div>
 
       <div className="text-xs text-gray-500">
         Created: {new Date(essay.createdDate).toLocaleDateString()} • 
-        Modified: {new Date(essay.lastModified).toLocaleDateString()}
+        Modified: {new Date(essay.lastModified).toLocaleDateString()} •
+        Added via: {essay.addedVia === 'file-picker' ? 'File Picker' : 'URL'}
       </div>
     </div>
   );

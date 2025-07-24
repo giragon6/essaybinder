@@ -39,7 +39,7 @@ export class GoogleAuthService {
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       response_type: 'code',
-      scope: 'openid email profile',
+      scope: 'openid email profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.labels',
       code_challenge: codeChallenge,
       code_challenge_method: 'S256',
       state: crypto.randomUUID(), 
