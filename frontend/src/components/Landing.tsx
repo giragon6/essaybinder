@@ -48,34 +48,17 @@ export default function Landing({ onUserChange }: LandingProps) {
   };
 
   return (
-    <div className="min-h-screen relative" style={{
-      backgroundColor: '#faf7f0',
-      backgroundImage: `
-        linear-gradient(90deg, #e8dcc0 1px, transparent 1px),
-        linear-gradient(180deg, #e8dcc0 1px, transparent 1px),
-        repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 23px,
-          #d4c5a9 23px,
-          #d4c5a9 24px
-        )
-      `,
-      backgroundSize: '30px 24px, 100% 24px, 100% 24px'
-    }}>
+    <div className="min-h-screen relative paper-background">
       {/* Left margin line */}
       <div className="absolute left-16 top-0 bottom-0 w-0.5 bg-red-300 opacity-60"></div>
       
-      <div className="relative z-10 p-6 max-w-7xl mx-auto" style={{ marginLeft: '80px' }}>
+      <div className="relative z-10 p-6 max-w-7xl mx-auto ml-20">
         {/* Header */}
         <div className="text-center mb-12 mt-8">
-          <h1 className="text-6xl font-bold mb-4 font-serif drop-shadow-sm transform -rotate-1" style={{ color: '#2c3e50' }}>
+          <h1 className="text-6xl font-bold mb-4 font-serif drop-shadow-sm transform -rotate-1 text-slate-800">
             📝 Essay Binder
           </h1>
-          <p className="text-lg italic transform rotate-1" style={{ 
-            color: '#5d6d7e',
-            fontFamily: 'Comic Sans MS, cursive'
-          }}>
+          <p className="text-lg italic transform rotate-1 text-slate-600 ">
             Your personal collection of essays
           </p>
         </div>
@@ -84,16 +67,10 @@ export default function Landing({ onUserChange }: LandingProps) {
         <div className="text-center">
           <div className="transform -rotate-1 max-w-md mx-auto">
             <div className="text-6xl mb-6">🔐</div>
-            <h2 className="text-3xl font-bold mb-4" style={{ 
-              color: '#2c3e50',
-              fontFamily: 'Comic Sans MS, cursive'
-            }}>
+            <h2 className="text-3xl font-bold mb-4 text-slate-800 ">
               Welcome!
             </h2>
-            <p className="mb-6 text-lg transform rotate-1" style={{ 
-              color: '#5d6d7e',
-              fontFamily: 'Comic Sans MS, cursive'
-            }}>
+            <p className="mb-6 text-lg transform rotate-1 text-slate-600 ">
               Connect your Google account to start building your personal essay collection
             </p>
             <button 

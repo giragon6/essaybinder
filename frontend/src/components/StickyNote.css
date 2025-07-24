@@ -81,3 +81,24 @@
 .flip-card-back {
   transform: rotateY(180deg);
 }
+
+/* Drag and drop effects */
+.essay-card {
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  cursor: move;
+}
+
+.essay-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.essay-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Smooth transitions for drag states */
+.essay-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.95) rotate(5deg);
+  z-index: 1000;
+}

@@ -1,7 +1,116 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Caveat';
+  src: url('/fonts/caveat/Caveat-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Custom Tailwind utilities */
+@layer utilities {
+  .paper-background {
+    background-color: #faf7f0;    
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 23px,
+        #d4c5a9 23px,
+        #d4c5a9 24px
+      );
+    background-size: 30px 24px, 100% 24px;
+  }
+  
+  .user-menu-shadow {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .sticky-note-shadow {
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.1);
+  }
+  
+  .svg-drop-shadow {
+    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.1));
+  }
+  
+  /* Rotation utilities for handwritten feel */
+  .rotate-slight-left {
+    transform: rotate(-2deg);
+  }
+  
+  .rotate-slight-right {
+    transform: rotate(2deg);
+  }
+  
+  .rotate-1-left {
+    transform: rotate(-1deg);
+  }
+  
+  .rotate-1-right {
+    transform: rotate(1deg);
+  }
+  
+  /* Component positioning */
+  .tape-roll-size {
+    width: 60px;
+    height: 60px;
+  }
+  
+  /* Complex shadows for components */
+  .handwritten-shadow {
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.1);
+  }
+  
+  /* White-out animation for logout */
+  .whiteout-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .whiteout-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, 
+      rgba(255,255,255,0.9) 0%, 
+      rgba(248,248,248,0.95) 25%, 
+      rgba(255,255,255,0.9) 50%, 
+      rgba(252,252,252,0.95) 75%, 
+      rgba(255,255,255,0.9) 100%);
+    background-size: 8px 8px;
+    border-radius: 4px;
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #333;
+    text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .whiteout-container:hover .whiteout-overlay {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  
+  .whiteout-container:hover .original-text {
+    opacity: 0.3;
+  }
+  
+  .original-text {
+    transition: opacity 0.3s ease-in-out;
+  }
+}
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: Caveat, cursive, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 

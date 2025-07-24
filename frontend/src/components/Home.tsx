@@ -1,32 +1,147 @@
 import { useState, useEffect } from "react";
 import EssayCard from "./EssayCard";
-import AuthComponent from "./AuthComponent";
 import Landing from "./Landing";
-import type { Essay, UserProfile } from "../models/essayModels";
+import TrashCan from "./TrashCan";
+import type { Essay, UserProfile, UserPositions, EssayPosition } from "../models/essayModels";
 import "./TapeRoll.css";
+import { Filters } from "./Filters";
 
 export default function Home() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [essays, setEssays] = useState<Essay[]>([]);
+  
   const [loading, setLoading] = useState(false);
+  const [addingEssay, setAddingEssay] = useState(false);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [newDocUrl, setNewDocUrl] = useState("");
-  const [addingEssay, setAddingEssay] = useState(false);
-  const [selectedTag, setSelectedTag] = useState("");
+
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagSearchMode, setTagSearchMode] = useState<'OR' | 'AND'>('OR');
+
+  // Position management
+  const [essayPositions, setEssayPositions] = useState<UserPositions>({});
+  const [hasUnsavedPositions, setHasUnsavedPositions] = useState(false);
+
   const [minWordCount, setMinWordCount] = useState("");
   const [maxWordCount, setMaxWordCount] = useState("");
   const [minCharCount, setMinCharCount] = useState("");
   const [maxCharCount, setMaxCharCount] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [selectedApplicationStatus, setSelectedApplicationStatus] = useState("");
 
   const handleUserChange = (newUser: UserProfile | null) => {
     setUser(newUser);
     if (newUser) {
       fetchEssays();
+      fetchPositions();
     } else {
       setEssays([]);
+      setEssayPositions({});
+    }
+  };
+
+  const fetchPositions = async () => {
+    try {
+      const response = await fetch('/api/positions', {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setEssayPositions(data.positions || {});
+      }
+    } catch (error) {
+      console.error("Error fetching positions:", error);
+    }
+  };
+
+  const savePositions = async () => {
+    try {
+      const response = await fetch('/api/positions', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ positions: essayPositions })
+      });
+      
+      if (response.ok) {
+        setHasUnsavedPositions(false);
+        alert('Positions saved successfully!');
+      } else {
+        alert('Failed to save positions');
+      }
+    } catch (error) {
+      console.error("Error saving positions:", error);
+      alert('Failed to save positions');
+    }
+  };
+
+  const handlePositionChange = (essayId: string, position: EssayPosition) => {
+    setEssayPositions(prev => ({
+      ...prev,
+      [essayId]: position
+    }));
+    setHasUnsavedPositions(true);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    
+    const essayData = e.dataTransfer.getData('application/essay-card');
+    if (essayData) {
+      try {
+        const { essayId, offsetX, offsetY } = JSON.parse(essayData);
+        const container = e.currentTarget.getBoundingClientRect();
+        
+        const newPosition: EssayPosition = {
+          x: e.clientX - container.left - offsetX,
+          y: e.clientY - container.top - offsetY,
+          zIndex: 1
+        };
+        
+        handlePositionChange(essayId, newPosition);
+      } catch (error) {
+        console.error('Error parsing drop data:', error);
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const getDefaultPosition = (index: number): EssayPosition => {
+    // Auto-arrange essays in a grid pattern if no saved position
+    const cols = 4;
+    const cardWidth = 300;
+    const cardHeight = 350;
+    const marginX = 20;
+    const marginY = 20;
+    
+    return {
+      x: (index % cols) * (cardWidth + marginX),
+      y: Math.floor(index / cols) * (cardHeight + marginY),
+      zIndex: 1
+    };
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        handleUserChange(null);
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
     }
   };
 
@@ -51,22 +166,6 @@ export default function Home() {
 
     checkCurrentUser();
   }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showUserMenu && !(event.target as Element).closest('.user-menu-container')) {
-        setShowUserMenu(false);
-      }
-    };
-
-    if (showUserMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showUserMenu]);
 
   const fetchEssays = async () => {
     setLoading(true);
@@ -214,23 +313,20 @@ export default function Home() {
     }
   };
 
-  const allTags = Array.from(new Set(essays.flatMap(essay => essay.tags))).sort();
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedTag("");
-    setMinWordCount("");
-    setMaxWordCount("");
-    setMinCharCount("");
-    setMaxCharCount("");
-    setSelectedApplicationStatus("");
-  };
-
   const filteredEssays = essays.filter(essay => {
     const matchesSearch = essay.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       essay.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesTag = !selectedTag || essay.tags.includes(selectedTag);
+    let matchesTags = true;
+    if (selectedTags.length > 0) {
+      if (tagSearchMode === 'OR') {
+        // OR logic: essay must have at least one of the selected tags
+        matchesTags = selectedTags.some(selectedTag => essay.tags.includes(selectedTag));
+      } else {
+        // AND logic: essay must have all selected tags
+        matchesTags = selectedTags.every(selectedTag => essay.tags.includes(selectedTag));
+      }
+    }
     
     const matchesWordCount = (!minWordCount || essay.wordCount >= parseInt(minWordCount)) &&
       (!maxWordCount || essay.wordCount <= parseInt(maxWordCount));
@@ -240,87 +336,59 @@ export default function Home() {
     
     const matchesApplicationStatus = !selectedApplicationStatus || essay.applicationStatus === selectedApplicationStatus;
     
-    return matchesSearch && matchesTag && matchesWordCount && matchesCharCount && matchesApplicationStatus;
+    return matchesSearch && matchesTags && matchesWordCount && matchesCharCount && matchesApplicationStatus;
   });
 
   return user ? (
-    <div className="min-h-screen relative" style={{
-      backgroundColor: '#faf7f0',
-      backgroundImage: `
-        linear-gradient(90deg, #e8dcc0 1px, transparent 1px),
-        linear-gradient(180deg, #e8dcc0 1px, transparent 1px),
-        repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 23px,
-          #d4c5a9 23px,
-          #d4c5a9 24px
-        )
-      `,
-      backgroundSize: '30px 24px, 100% 24px, 100% 24px'
-    }}>
+    <div className="min-h-screen relative paper-background top-0">
       <div className="absolute left-16 top-0 bottom-0 w-0.5 bg-red-300 opacity-60"></div>
       
-      <div className="relative z-10 p-6 max-w-7xl mx-auto" style={{ marginLeft: '80px' }}>
-        <div className="absolute top-6 right-6 transform rotate-2 user-menu-container" style={{ 
-          fontFamily: 'Comic Sans MS, cursive',
-          color: '#4a5568',
-          fontSize: '18px',
-          zIndex: 1000
-        }}>
+      <div className="relative z-10 p-6 max-w-7xl ml-20 mr-0 pt-0">
+        
+        <div className="absolute right-6 transform rotate-2 user-menu-container text-gray-600 text-lg z-50 pt-6">
           <div className="flex items-center gap-2">
-            <span>{user.name}</span>
-            <button 
-              className={`cursor-pointer hover:scale-110 transition-transform ${showUserMenu ? 'scale-110' : ''}`}
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              style={{ fontSize: '16px' }}
+            <h1 className="text-6xl font-bold mr-10 mb-4 drop-shadow-sm transform -rotate-1 text-slate-800">
+              Essay Binder
+            </h1>
+
+            <div 
+              className="cursor-pointer right-0 top-3 absolute whiteout-container"
+              onClick={handleLogout}
             >
-              ✏️
-            </button>
-          </div>
-          
-          {showUserMenu && (
-            <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl border-2 border-amber-200 p-3 min-w-56 transform -rotate-1"
-                 style={{ 
-                   backgroundColor: '#fefdf7',
-                   fontFamily: 'Comic Sans MS, cursive',
-                   zIndex: 9999,
-                   boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-                   position: 'absolute'
-                 }}>
-              <AuthComponent onUserChange={handleUserChange} user={user} />
+              <span className="original-text">{user.name}</span>
+              <div className="whiteout-overlay">
+                Logout
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         <div>
-            <div className="text-center mb-12 mt-8">
-              <h1 className="text-6xl font-bold mb-4 font-serif drop-shadow-sm transform -rotate-1" style={{ color: '#2c3e50' }}>
-                📝 Essay Binder
-              </h1>
-              <p className="text-lg italic transform rotate-1" style={{ 
-                color: '#5d6d7e',
-                fontFamily: 'Comic Sans MS, cursive'
-              }}>
-                My personal collection of essays
-              </p>
-            </div>
+            <Filters 
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
+              tagSearchMode={tagSearchMode}
+              setTagSearchMode={setTagSearchMode}
+              minWordCount={minWordCount}
+              setMinWordCount={setMinWordCount}
+              maxWordCount={maxWordCount}
+              setMaxWordCount={setMaxWordCount}
+              minCharCount={minCharCount}
+              setMinCharCount={setMinCharCount}
+              maxCharCount={maxCharCount}
+              setMaxCharCount={setMaxCharCount}
+              selectedApplicationStatus={selectedApplicationStatus}
+              setSelectedApplicationStatus={setSelectedApplicationStatus}
+              allTags={essays.flatMap(essay => essay.tags)}
+            />
 
-            <div className="relative mb-8 inline-block">
-              <div className="relative p-6 rounded-lg shadow-md border-2 transform hover:scale-102 transition-all duration-200" 
-                   style={{
-                     backgroundColor: '#fff9c4',
-                     borderColor: '#fbbf24',
-                     transform: 'rotate(-2deg)',
-                     boxShadow: '4px 4px 8px rgba(0,0,0,0.1)',
-                     maxWidth: '400px'
-                   }}>
+            <div className="relative mt-40 mb-8 inline-block">
+              <div className="relative p-6 rounded-lg shadow-md border-2 border-amber-400 bg-yellow-100 transform hover:scale-105 transition-all duration-200 max-w-sm -rotate-2 sticky-note-shadow">
                 <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-white bg-opacity-60 rounded-sm shadow-sm border border-gray-200"></div>
                 
-                <h3 className="text-lg font-medium mb-4 flex items-center" style={{ 
-                  color: '#92400e',
-                  fontFamily: 'Comic Sans MS, cursive'
-                }}>
+                <h3 className="text-lg font-medium mb-4 flex items-center text-amber-800">
                   Add New Essay ✍️
                 </h3>
                 
@@ -330,20 +398,12 @@ export default function Home() {
                     placeholder="Paste Google Docs URL here..."
                     value={newDocUrl}
                     onChange={(e) => setNewDocUrl(e.target.value)}
-                    className="w-full p-3 border-2 rounded-lg bg-white bg-opacity-80 placeholder-gray-600 focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                    style={{ 
-                      borderColor: '#d97706',
-                      fontFamily: 'Comic Sans MS, cursive'
-                    }}
+                    className="w-full p-3 border-2 border-amber-600 rounded-lg bg-white bg-opacity-80 placeholder-gray-600 focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
                   />
                   <button 
                     onClick={addEssayByUrl}
                     disabled={addingEssay || !newDocUrl.trim()}
-                    className="w-full py-3 rounded-lg disabled:opacity-50 transition-all transform hover:scale-105 font-medium shadow-md text-white"
-                    style={{ 
-                      backgroundColor: '#059669',
-                      fontFamily: 'Comic Sans MS, cursive'
-                    }}
+                    className="w-full py-3 rounded-lg disabled:opacity-50 transition-all transform hover:scale-105 font-medium shadow-md text-white bg-emerald-600"
                   >
                     {addingEssay ? '⏳ Adding...' : '➕ Add Essay'}
                   </button>
@@ -351,7 +411,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Hand-drawn separator line */}
             <div className="my-12 relative">
               <svg width="100%" height="40" viewBox="0 0 800 40" className="overflow-visible">
                 <path 
@@ -360,253 +419,48 @@ export default function Home() {
                   strokeWidth="2" 
                   fill="none" 
                   strokeLinecap="round"
-                  style={{ filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.1))' }}
+                  className="svg-drop-shadow"
                 />
                 <text 
                   x="50%" 
                   y="35" 
                   textAnchor="middle" 
-                  style={{ 
-                    fontFamily: 'Comic Sans MS, cursive',
-                    fontSize: '14px',
-                    fill: '#8b7355'
-                  }}
+                  className="fill-amber-700 text-sm "
                 >
                   My Essays ↓
                 </text>
               </svg>
             </div>
 
-            <div className={`active-filters ${!searchTerm && !selectedTag && !minWordCount && !maxWordCount && !minCharCount && !maxCharCount && !selectedApplicationStatus ? 'empty' : ''}`}>
-              {searchTerm && (
-                <div className="tape-piece new-tape">
-                  🔎 "{searchTerm}"
-                  <span className="remove-tape" onClick={() => setSearchTerm("")}>×</span>
-                </div>
-              )}
-              {selectedTag && (
-                <div className="tape-piece new-tape">
-                  🏷️ {selectedTag}
-                  <span className="remove-tape" onClick={() => setSelectedTag("")}>×</span>
-                </div>
-              )}
-              {selectedApplicationStatus && (
-                <div className="tape-piece new-tape">
-                  🎓 {selectedApplicationStatus.charAt(0).toUpperCase() + selectedApplicationStatus.slice(1)}
-                  <span className="remove-tape" onClick={() => setSelectedApplicationStatus("")}>×</span>
-                </div>
-              )}
-              {(minWordCount || maxWordCount) && (
-                <div className="tape-piece new-tape">
-                  📊 Words: {minWordCount || '0'}-{maxWordCount || '∞'}
-                  <span className="remove-tape" onClick={() => { setMinWordCount(""); setMaxWordCount(""); }}>×</span>
-                </div>
-              )}
-              {(minCharCount || maxCharCount) && (
-                <div className="tape-piece new-tape">
-                  🔤 Chars: {minCharCount || '0'}-{maxCharCount || '∞'}
-                  <span className="remove-tape" onClick={() => { setMinCharCount(""); setMaxCharCount(""); }}>×</span>
-                </div>
-              )}
-            </div>
-
-            <div className="mb-8">
-              <div 
-                className={`tape-roll ${showFilters ? 'spinning' : ''}`}
-                style={{ width: '120px', height: '60px', margin: '0 auto' }}
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <div className="tape-roll-label">
-                  {showFilters ? 'Close' : 'Filters'}
-                </div>
-              </div>
-
-              {showFilters && (
-                <div className="tape-menu">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ 
-                        color: '#374151',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
-                        🔎 Search Essays
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Search by title or tags..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full p-3 border-2 rounded-lg bg-white placeholder-gray-600 focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                        style={{ 
-                          borderColor: '#d97706',
-                          fontFamily: 'Comic Sans MS, cursive'
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ 
-                        color: '#374151',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
-                        🏷️ Filter by Tag
-                      </label>
-                      <select
-                        value={selectedTag}
-                        onChange={(e) => setSelectedTag(e.target.value)}
-                        className="w-full p-3 border-2 rounded bg-white"
-                        style={{ 
-                          borderColor: '#d97706',
-                          fontFamily: 'Comic Sans MS, cursive'
-                        }}
-                      >
-                        <option value="">All tags</option>
-                        {allTags.map(tag => (
-                          <option key={tag} value={tag}>{tag}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ 
-                        color: '#374151',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
-                        🎓 Filter by Application Status
-                      </label>
-                      <select
-                        value={selectedApplicationStatus}
-                        onChange={(e) => setSelectedApplicationStatus(e.target.value)}
-                        className="w-full p-3 border-2 rounded bg-white"
-                        style={{ 
-                          borderColor: '#d97706',
-                          fontFamily: 'Comic Sans MS, cursive'
-                        }}
-                      >
-                        <option value="">All statuses</option>
-                        <option value="draft">Draft</option>
-                        <option value="submitted">Submitted</option>
-                        <option value="accepted">Accepted</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="waitlisted">Waitlisted</option>
-                        <option value="not-used">Not Used</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ 
-                        color: '#374151',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
-                        📊 Word Count Range
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="number"
-                          placeholder="Min"
-                          value={minWordCount}
-                          onChange={(e) => setMinWordCount(e.target.value)}
-                          className="w-1/2 p-2 border-2 rounded"
-                          style={{ 
-                            borderColor: '#d97706',
-                            fontFamily: 'Comic Sans MS, cursive'
-                          }}
-                        />
-                        <input
-                          type="number"
-                          placeholder="Max"
-                          value={maxWordCount}
-                          onChange={(e) => setMaxWordCount(e.target.value)}
-                          className="w-1/2 p-2 border-2 rounded"
-                          style={{ 
-                            borderColor: '#d97706',
-                            fontFamily: 'Comic Sans MS, cursive'
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ 
-                        color: '#374151',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
-                        🔤 Character Count Range
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="number"
-                          placeholder="Min"
-                          value={minCharCount}
-                          onChange={(e) => setMinCharCount(e.target.value)}
-                          className="w-1/2 p-2 border-2 rounded"
-                          style={{ 
-                            borderColor: '#d97706',
-                            fontFamily: 'Comic Sans MS, cursive'
-                          }}
-                        />
-                        <input
-                          type="number"
-                          placeholder="Max"
-                          value={maxCharCount}
-                          onChange={(e) => setMaxCharCount(e.target.value)}
-                          className="w-1/2 p-2 border-2 rounded"
-                          style={{ 
-                            borderColor: '#d97706',
-                            fontFamily: 'Comic Sans MS, cursive'
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 text-center">
-                    <button
-                      onClick={clearFilters}
-                      className="px-6 py-2 rounded-lg transition-all transform hover:scale-105 text-white"
-                      style={{ 
-                        backgroundColor: '#6b7280',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}
-                    >
-                      🗑️ Clear All Filters
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
             <div className="mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-semibold flex items-center transform -rotate-1" style={{ 
-                  color: '#2c3e50',
-                  fontFamily: 'Comic Sans MS, cursive'
-                }}>
+                <h3 className="text-2xl font-semibold flex items-center transform -rotate-1 text-slate-800 ">
                   📚 My Essays ({filteredEssays.length})
                 </h3>
-                {essays.length > 0 && (
-                  <div className="text-sm transform rotate-1" style={{ 
-                    color: '#5d6d7e',
-                    fontFamily: 'Comic Sans MS, cursive'
-                  }}>
-                    Total: {essays.length} essays ✨
-                  </div>
-                )}
+                <div className="flex items-center gap-4">
+                  {essays.length > 0 && (
+                    <div className="text-sm transform rotate-1 text-slate-600 ">
+                      Total: {essays.length} essays ✨
+                    </div>
+                  )}
+                  {hasUnsavedPositions && (
+                    <button
+                      onClick={savePositions}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all transform hover:scale-105 flex items-center gap-2"
+                    >
+                      💾 Save Positions
+                    </button>
+                  )}
+                </div>
               </div>
               
               {loading && essays.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 mx-auto mb-4" style={{ borderColor: '#d97706' }}></div>
-                  <p className="text-xl mb-2 transform -rotate-1" style={{ 
-                    color: '#5d6d7e',
-                    fontFamily: 'Comic Sans MS, cursive'
-                  }}>
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-600 mx-auto mb-4"></div>
+                  <p className="text-xl mb-2 transform -rotate-1 text-slate-600 ">
                     Loading your essays...
                   </p>
-                  <p className="mt-2 transform rotate-1" style={{ 
-                    color: '#9ca3af',
-                    fontFamily: 'Comic Sans MS, cursive'
-                  }}>
+                  <p className="mt-2 transform rotate-1 text-gray-400 ">
                     Organizing your collection ✨
                   </p>
                 </div>
@@ -615,22 +469,13 @@ export default function Home() {
                   {essays.length === 0 ? (
                     <div className="transform -rotate-1">
                       <div className="text-6xl mb-4">📄</div>
-                      <p className="text-xl mb-4" style={{ 
-                        color: '#5d6d7e',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
+                      <p className="text-xl mb-4 text-slate-600 ">
                         No essays in your collection yet
                       </p>
-                      <p className="mb-6 transform rotate-1" style={{ 
-                        color: '#9ca3af',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
+                      <p className="mb-6 transform rotate-1 text-gray-400 ">
                         Start building your personal essay library!
                       </p>
-                      <div className="text-sm space-y-1" style={{ 
-                        color: '#9ca3af',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
+                      <div className="text-sm space-y-1 text-gray-400 ">
                         <p>💡 Add any Google Docs essay URL above</p>
                         <p>🏷️ Tag and organize your collection</p>
                         <p>🔍 Search and filter with ease</p>
@@ -639,39 +484,53 @@ export default function Home() {
                   ) : (
                     <div className="transform rotate-1">
                       <div className="text-4xl mb-4">🔍</div>
-                      <p className="text-xl mb-2" style={{ 
-                        color: '#5d6d7e',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
+                      <p className="text-xl mb-2 text-slate-600 ">
                         No essays match your filters
                       </p>
-                      <p style={{ 
-                        color: '#9ca3af',
-                        fontFamily: 'Comic Sans MS, cursive'
-                      }}>
+                      <p className="text-gray-400 ">
                         Try adjusting your search or clearing filters
                       </p>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredEssays.map((essay) => (
-                    <EssayCard 
-                      key={essay.id} 
-                      essay={essay} 
-                      onAddTag={addTagToEssay}
-                      onRemoveTag={removeTagFromEssay}
-                      onRemoveEssay={removeEssay}
-                      onUpdateApplication={updateEssayApplication}
-                      onUpdateNotes={updateEssayNotes}
-                    />
-                  ))}
+                <div 
+                  className="relative min-h-[800px]" 
+                  style={{ width: '100%', position: 'relative' }}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                >
+                  {filteredEssays.map((essay, index) => {
+                    const position = essayPositions[essay.id] || getDefaultPosition(index);
+                    return (
+                      <div
+                        key={essay.id}
+                        style={{
+                          position: 'absolute',
+                          left: position.x,
+                          top: position.y,
+                          zIndex: position.zIndex || 1
+                        }}
+                      >
+                        <EssayCard 
+                          essay={essay} 
+                          onAddTag={addTagToEssay}
+                          onRemoveTag={removeTagFromEssay}
+                          onUpdateApplication={updateEssayApplication}
+                          onUpdateNotes={updateEssayNotes}
+                          onPositionChange={handlePositionChange}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
         </div>
+        
+        {/* Trash Can for drag and drop deletion */}
+        <TrashCan onDropEssay={removeEssay} />
       </div>
     ) : (
       <Landing onUserChange={handleUserChange} />

@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3001;
 
 const authRoutes = require('./routes/auth');
 const essayRoutes = require('./routes/essay');
+const positionRoutes = require('./routes/position');
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -26,6 +27,7 @@ app.get('/health', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/essays', essayRoutes);
+app.use('/positions', positionRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

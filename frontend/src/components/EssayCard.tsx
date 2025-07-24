@@ -2,7 +2,8 @@ import { useState } from "react";
 import type { EssayCardProps } from "../models/essayModels";
 import "./StickyNote.css";
 
-export default function EssayCard({ essay, onAddTag, onRemoveTag, onRemoveEssay, onUpdateApplication, onUpdateNotes }: EssayCardProps) {
+export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplication, onUpdateNotes, onPositionChange }: EssayCardProps) {
+  // onPositionChange is handled in the parent component through drag events
   const [newTag, setNewTag] = useState("");
   const [isFlipped, setIsFlipped] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -10,6 +11,7 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onRemoveEssay,
   const [editingApplication, setEditingApplication] = useState(false);
   const [tempApplicationFor, setTempApplicationFor] = useState(essay.applicationFor || "");
   const [tempApplicationStatus, setTempApplicationStatus] = useState<'draft' | 'submitted' | 'accepted' | 'rejected' | 'waitlisted' | 'not-used'>(essay.applicationStatus || "draft");
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleAddTag = () => {
     if (newTag.trim()) {
@@ -58,27 +60,38 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onRemoveEssay,
   const stickyColor = colors[colorIndex];
 
   return (
-    <div className={`relative group ${stickyColor} rounded-lg p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:rotate-1 min-h-[300px] max-w-[280px] mx-auto cursor-pointer border-2`}
-         style={{
-           transform: `rotate(${Math.random() * 6 - 3}deg)`,
-           boxShadow: '4px 4px 8px rgba(0,0,0,0.1)'
-         }}
-         onClick={() => setIsFlipped(!isFlipped)}>
+    <div 
+      className={`relative group ${stickyColor} rounded-lg p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:rotate-1 min-h-[300px] max-w-[280px] mx-auto cursor-move border-2 sticky-note-shadow`}
+      style={{
+        transform: `rotate(${Math.random() * 6 - 3}deg)`
+      }}
+      draggable={true}
+      onDragStart={(e) => {
+        setIsDragging(true);
+        const rect = e.currentTarget.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+        
+        e.dataTransfer.setData('text/plain', essay.id);
+        e.dataTransfer.setData('application/essay-card', JSON.stringify({
+          essayId: essay.id,
+          offsetX,
+          offsetY
+        }));
+        e.dataTransfer.effectAllowed = 'move';
+        e.currentTarget.style.opacity = '0.5';
+        e.currentTarget.style.transform = 'scale(0.95) rotate(5deg)';
+      }}
+      onDragEnd={(e) => {
+        setIsDragging(false);
+        e.currentTarget.style.opacity = '1';
+        e.currentTarget.style.transform = '';
+      }}
+      onClick={() => !isDragging && setIsFlipped(!isFlipped)}
+    >
       
       {/* Tape effect */}
       <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-white bg-opacity-60 rounded-sm shadow-sm border border-gray-200"></div>
-      
-      {/* Remove button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemoveEssay(essay.id);
-        }}
-        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center z-10"
-        title="Remove from collection"
-      >
-        ✕
-      </button>
 
       {!isFlipped ? (
         /* Front of sticky note */
@@ -259,8 +272,7 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onRemoveEssay,
                     onChange={(e) => setTempNotes(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                     rows={3}
-                    className="w-full p-1 border border-gray-300 rounded text-xs bg-white resize-none"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    className="w-full p-1 border border-gray-300 rounded text-xs bg-white resize-none "
                   />
                   <button
                     onClick={(e) => {
@@ -275,7 +287,7 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onRemoveEssay,
               ) : (
                 <div className="text-xs text-gray-700 min-h-[2rem]">
                   {essay.notes ? (
-                    <div className="italic" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                    <div className="italic ">
                       {essay.notes}
                     </div>
                   ) : (
