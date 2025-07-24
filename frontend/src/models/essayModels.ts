@@ -9,6 +9,9 @@ interface Essay {
   createdDate: string;
   lastModified: string;
   googleDocId: string;
+  applicationFor?: string; // e.g., "Harvard University", "MIT Summer Program", etc.
+  applicationStatus?: 'draft' | 'submitted' | 'accepted' | 'rejected' | 'waitlisted' | 'not-used';
+  notes?: string; // User's personal notes about the essay
 }
 
 interface UserProfile {
@@ -21,7 +24,10 @@ interface UserProfile {
 interface EssayCardProps {
   essay: Essay;
   onAddTag: (essayId: string, tag: string) => void;
+  onRemoveTag: (essayId: string, tag: string) => void;
   onRemoveEssay: (essayId: string) => void;
+  onUpdateApplication: (essayId: string, applicationFor: string, applicationStatus: string) => void;
+  onUpdateNotes: (essayId: string, notes: string) => void;
 }
 
 export type { Essay, UserProfile, EssayCardProps };

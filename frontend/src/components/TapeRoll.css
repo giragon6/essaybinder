@@ -1,0 +1,254 @@
+/* Tape Roll Styles */
+.tape-roll {
+  background: linear-gradient(
+    90deg,
+    #f4f4f4 0%,
+    #e8e8e8 20%,
+    #f4f4f4 40%,
+    #e8e8e8 60%,
+    #f4f4f4 80%,
+    #e8e8e8 100%
+  );
+  background-size: 10px 100%;
+  border: 2px solid #d1d5db;
+  border-radius: 50px;
+  box-shadow: 
+    inset 0 2px 4px rgba(0,0,0,0.1),
+    inset 0 -2px 4px rgba(255,255,255,0.5),
+    0 4px 8px rgba(0,0,0,0.15);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.tape-roll:hover {
+  transform: rotate(-2deg) scale(1.05);
+  box-shadow: 
+    inset 0 2px 4px rgba(0,0,0,0.1),
+    inset 0 -2px 4px rgba(255,255,255,0.5),
+    0 6px 12px rgba(0,0,0,0.2);
+}
+
+.tape-roll::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  background: #6b7280;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.tape-roll-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Comic Sans MS', cursive;
+  font-size: 12px;
+  font-weight: bold;
+  color: #4b5563;
+  text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Tape Menu */
+.tape-menu {
+  background: #f9fafb;
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  position: relative;
+  margin-top: 12px;
+  padding: 20px;
+  transform: rotate(-1deg);
+  transition: all 0.3s ease;
+}
+
+.tape-menu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #d1d5db;
+}
+
+.tape-menu::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 22px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #f9fafb;
+}
+
+/* Torn Tape Pieces */
+.tape-piece {
+  display: inline-block;
+  background: linear-gradient(45deg, #fef3c7 25%, #fde68a 25%, #fde68a 50%, #fef3c7 50%, #fef3c7 75%, #fde68a 75%);
+  background-size: 8px 8px;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  padding: 4px 12px;
+  margin: 2px;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-family: 'Comic Sans MS', cursive;
+  font-size: 12px;
+  font-weight: bold;
+  color: #92400e;
+  transform: rotate(-2deg);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.tape-piece:nth-child(2n) {
+  transform: rotate(1deg);
+}
+
+.tape-piece:nth-child(3n) {
+  transform: rotate(-1deg);
+}
+
+.tape-piece:hover {
+  transform: rotate(0deg) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.tape-piece::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    #f59e0b 2px,
+    #f59e0b 4px
+  );
+}
+
+.tape-piece::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: -2px;
+  right: -2px;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    #f59e0b 2px,
+    #f59e0b 4px
+  );
+}
+
+.tape-piece .remove-tape {
+  margin-left: 8px;
+  color: #dc2626;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tape-piece .remove-tape:hover {
+  color: #991b1b;
+}
+
+/* Active filters area */
+.active-filters {
+  min-height: 40px;
+  margin-bottom: 16px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+  border: 2px dashed #d1d5db;
+  position: relative;
+}
+
+.active-filters::before {
+  content: 'Active Filters:';
+  position: absolute;
+  top: -12px;
+  left: 12px;
+  background: #faf7f0;
+  padding: 0 8px;
+  font-family: 'Comic Sans MS', cursive;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.active-filters.empty::before {
+  content: 'No filters applied - click tape roll to add filters';
+  color: #9ca3af;
+}
+
+/* Animation for tape being torn off */
+@keyframes tape-tear {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) rotate(-2deg);
+    opacity: 1;
+  }
+}
+
+.tape-piece.new-tape {
+  animation: tape-tear 0.5s ease-out;
+}
+
+/* Roll rotation animation */
+@keyframes roll-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(15deg); }
+}
+
+.tape-roll.spinning {
+  animation: roll-spin 0.3s ease-out;
+}
+
+/* User Menu Styles */
+.user-menu-container {
+  position: relative;
+}
+
+.user-menu-container button:hover {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+/* Dropdown animation */
+@keyframes dropdown-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) rotate(-1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(-1deg);
+  }
+}
+
+.user-menu-container > div:last-child {
+  animation: dropdown-appear 0.2s ease-out;
+}

@@ -40,7 +40,7 @@ export default function Login() {
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         redirect_uri: `${window.location.origin}/auth/callback`,
         response_type: 'code',
-        scope: 'openid email profile https://www.googleapis.com/auth/documents.readonly https://www.googleapis.com/auth/drive.readonly',
+        scope: 'openid email profile https://www.googleapis.com/auth/documents.readonly',
         access_type: 'offline',
         prompt: 'select_account'
       });

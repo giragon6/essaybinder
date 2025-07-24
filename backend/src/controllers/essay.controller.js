@@ -137,6 +137,9 @@ const addEssayByUrl = async (req, res) => {
         userId: req.user.userId,
         dateAdded: admin.firestore.FieldValue.serverTimestamp(),
         lastSynced: admin.firestore.FieldValue.serverTimestamp(),
+        applicationFor: '',
+        applicationStatus: 'draft',
+        notes: '',
         ...stats
       };
 
@@ -309,6 +312,58 @@ function calculateStats(docData) {
   return { characterCount, wordCount };
 }
 
+const updateEssayApplication = async (req, res) => {
+  try {
+    const { essayId } = req.params;
+    const { applicationFor, applicationStatus } = req.body;
+
+    const essayRef = essaysCollection.doc(essayId);
+    const essayDoc = await essayRef.get();
+
+    if (!essayDoc.exists) {
+      return res.status(404).json({ error: 'Essay not found' });
+    }
+
+    if (essayDoc.data().userId !== req.user.userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const updateData = {};
+    if (applicationFor !== undefined) updateData.applicationFor = applicationFor;
+    if (applicationStatus !== undefined) updateData.applicationStatus = applicationStatus;
+
+    await essayRef.update(updateData);
+    res.json({ message: 'Essay application info updated successfully' });
+  } catch (error) {
+    console.error('Error updating essay application:', error);
+    res.status(500).json({ error: 'Failed to update essay application info' });
+  }
+};
+
+const updateEssayNotes = async (req, res) => {
+  try {
+    const { essayId } = req.params;
+    const { notes } = req.body;
+
+    const essayRef = essaysCollection.doc(essayId);
+    const essayDoc = await essayRef.get();
+
+    if (!essayDoc.exists) {
+      return res.status(404).json({ error: 'Essay not found' });
+    }
+
+    if (essayDoc.data().userId !== req.user.userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    await essayRef.update({ notes: notes || '' });
+    res.json({ message: 'Essay notes updated successfully' });
+  } catch (error) {
+    console.error('Error updating essay notes:', error);
+    res.status(500).json({ error: 'Failed to update essay notes' });
+  }
+};
+
 module.exports = {
   getEssays,
   getHealthCheck,
@@ -316,5 +371,7 @@ module.exports = {
   removeEssay,
   addTagToEssay,
   removeTagFromEssay,
-  updateEssayTheme
+  updateEssayTheme,
+  updateEssayApplication,
+  updateEssayNotes
 };
