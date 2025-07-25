@@ -1,54 +1,11 @@
-# React + TypeScript + Vite
+## EssayBinder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Note: EssayBinder needs to access your Google Docs to work, and the permissions it has to request from the Google API are fairly permissive. If you have any concerns about privacy, feel free to check the source code -- we will never store any of your files' content. While the app is being reviewed, though, Google will warn you about the project's veracity. To bypass this, when the warning appears, go to Advanced and proceed to accept the permissions until sign-in is allowed. 
 
-Currently, two official plugins are available:
+EssayBinder is an app that aims to help you organize the seemingly endless number of application essays for reuse. Whether it be college, summer programs, or internships, you'll probably write hundreds of personal essays over your life, many of them interchangeable. EssayBinder integrates with Google Docs -- the text editor of choice for the creation of many of these essays -- to help you tag and catalog your writing so you can reuse essays efficiently. It never stores your essay content: only the metadata, such as character count, and any tags or notes you provide it.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+Features:
+- Paper-like UI with hand-drawn, cozy vibes
+- Draggable essay "sticky notes" for easy and highly customizable organization
+- In-depth filtering and search system (title, character/word count, tags, and more!)
+- Easy import of essays (just paste the URL and go!)
