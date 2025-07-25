@@ -2,8 +2,6 @@ const admin = require('firebase-admin');
 const { encryptRefreshToken, decryptRefreshToken } = require('../utils/encryption');
 
 const initFirebase = () => { 
-  return null //test
-
   if (!admin.apps.length) {
     try {
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
