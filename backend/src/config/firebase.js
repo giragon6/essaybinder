@@ -4,8 +4,9 @@ const { encryptRefreshToken, decryptRefreshToken } = require('../utils/encryptio
 const initFirebase = () => {
   if (!admin.apps.length) {
     try {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
       admin.initializeApp({
-        credential: admin.credential.applicationDefault()
+        credential: admin.credential.cert(serviceAccount)
       });
       console.log('Firebase Admin initialized successfully');
     } catch (error) {
