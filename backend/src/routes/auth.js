@@ -23,10 +23,6 @@ router.post('/exchange-code', async (req, res) => {
     const { OAuth2Client } = require('google-auth-library');
     const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
     
-    // Decode the token to see its audience before verification
-    const jwt = require('jsonwebtoken');
-    const decoded = jwt.decode(id_token);
-    
     const ticket = await client.verifyIdToken({
       idToken: id_token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -106,12 +102,11 @@ router.post('/refresh-token', async (req, res) => {
 
     const { access_token } = response.data;
     
-    // Store new access token in secure httpOnly cookie
     res.cookie('access_token', access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 1000 // 1 hour
+      maxAge: 60 * 60 * 1000
     });
     
     res.json({ success: true });

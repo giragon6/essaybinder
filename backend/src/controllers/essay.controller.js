@@ -1,6 +1,7 @@
 const { google } = require('googleapis');
 const { getFirestore } = require('../config/firebase');
 const { getGoogleAuthClient } = require('../utils/googleAuth');
+const { getCacheKey, setCache, getCache, deleteCache } = require('../config/redis');
 const admin = require('../config/firebase').admin();
 
 const db = getFirestore();
@@ -8,8 +9,20 @@ const essaysCollection = db.collection('essays');
 
 const getEssays = async (req, res) => {
   try {
+    const userId = req.user.userId;
+    
+    // Check cache first
+    const cacheKey = getCacheKey('essays', userId);
+    const cachedEssays = await getCache(cacheKey);
+    
+    if (cachedEssays) {
+      console.log('Returning cached essays for user:', userId);
+      return res.json({ essays: cachedEssays, fromCache: true });
+    }
+
+    // Get base essays from Firestore
     const snapshot = await essaysCollection
-      .where('userId', '==', req.user.userId)
+      .where('userId', '==', userId)
       .orderBy('dateAdded', 'desc')
       .get();
     
@@ -18,16 +31,29 @@ const getEssays = async (req, res) => {
       userEssays.push({ id: doc.id, ...doc.data() });
     });
 
+    // Try to get Google auth
     let oauth2Client;
     try {
       oauth2Client = getGoogleAuthClient(req);
     } catch (error) {
+      // Cache basic essays without Google enrichment
+      await setCache(cacheKey, userEssays, 60); // 1 minute cache for unenriched data
       return res.json({ essays: userEssays });
     }
 
+    // Enrich with Google API data (with individual caching)
     const enrichedEssays = await Promise.all(
       userEssays.map(async (essay) => {
         try {
+          // Check individual essay cache
+          const essayKey = getCacheKey('essay-meta', userId, essay.googleDocId);
+          const cachedMeta = await getCache(essayKey);
+          
+          if (cachedMeta) {
+            return { ...essay, ...cachedMeta };
+          }
+
+          // Fetch fresh data from Google APIs
           const docs = google.docs({ version: 'v1', auth: oauth2Client });
           const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
@@ -42,7 +68,18 @@ const getEssays = async (req, res) => {
           });
 
           const stats = calculateStats(docInfo.data);
+          
+          const enrichmentData = {
+            title: fileInfo.data.name,
+            lastModified: fileInfo.data.modifiedTime,
+            createdDate: fileInfo.data.createdTime,
+            ...stats
+          };
 
+          // Cache individual essay metadata for 5 minutes
+          await setCache(essayKey, enrichmentData, 300);
+
+          // Update Firestore with fresh data
           await essaysCollection.doc(essay.id).update({
             title: fileInfo.data.name,
             lastModified: fileInfo.data.modifiedTime,
@@ -51,13 +88,7 @@ const getEssays = async (req, res) => {
             lastSynced: admin.firestore.FieldValue.serverTimestamp()
           });
 
-          return {
-            ...essay,
-            title: fileInfo.data.name,
-            lastModified: fileInfo.data.modifiedTime,
-            createdDate: fileInfo.data.createdTime,
-            ...stats
-          };
+          return { ...essay, ...enrichmentData };
         } catch (error) {
           console.error(`Error fetching metadata for ${essay.googleDocId}:`, error);
           return essay;
@@ -65,6 +96,9 @@ const getEssays = async (req, res) => {
       })
     );
 
+    // Cache the full enriched essays list for 2 minutes
+    await setCache(cacheKey, enrichedEssays, 120);
+    
     res.json({ essays: enrichedEssays });
   } catch (error) {
     console.error('Error getting essays:', error);
@@ -72,13 +106,22 @@ const getEssays = async (req, res) => {
   }
 };
 
-const getHealthCheck = (req, res) => {
-  res.json({ status: 'OK', message: 'online' });
+// Cache invalidation helpers
+const invalidateUserCache = async (userId) => {
+  const patterns = [
+    getCacheKey('essays', userId),
+    getCacheKey('essay-meta', userId, '*')
+  ];
+  
+  for (const pattern of patterns) {
+    await deleteCache(pattern);
+  }
 };
 
 const addEssayByUrl = async (req, res) => {
   try {
     const { url, description } = req.body;
+    const userId = req.user.userId;
     
     if (!url) {
       return res.status(400).json({ error: 'Google Docs URL is required' });
@@ -92,7 +135,7 @@ const addEssayByUrl = async (req, res) => {
     const googleDocId = docIdMatch[1];
 
     const existingSnapshot = await essaysCollection
-      .where('userId', '==', req.user.userId)
+      .where('userId', '==', userId)
       .where('googleDocId', '==', googleDocId)
       .get();
     
@@ -134,7 +177,7 @@ const addEssayByUrl = async (req, res) => {
         tags: [],
         createdDate: fileInfo.data.createdTime,
         lastModified: fileInfo.data.modifiedTime,
-        userId: req.user.userId,
+        userId: userId,
         dateAdded: admin.firestore.FieldValue.serverTimestamp(),
         lastSynced: admin.firestore.FieldValue.serverTimestamp(),
         applicationFor: '',
@@ -144,6 +187,9 @@ const addEssayByUrl = async (req, res) => {
       };
 
       const docRef = await essaysCollection.add(essayData);
+
+      // Invalidate user's cache since we added a new essay
+      await invalidateUserCache(userId);
 
       res.json({
         message: 'Essay added successfully',
@@ -183,14 +229,18 @@ const addEssayByUrl = async (req, res) => {
 const removeEssay = async (req, res) => {
   try {
     const { essayId } = req.params;
+    const userId = req.user.userId;
     
     const essayDoc = await essaysCollection.doc(essayId).get();
     
-    if (!essayDoc.exists || essayDoc.data().userId !== req.user.userId) {
+    if (!essayDoc.exists || essayDoc.data().userId !== userId) {
       return res.status(404).json({ error: 'Essay not found' });
     }
 
     await essaysCollection.doc(essayId).delete();
+    
+    // Invalidate cache after deletion
+    await invalidateUserCache(userId);
     
     res.json({ success: true, message: 'Essay removed from catalog' });
   } catch (error) {
@@ -199,14 +249,16 @@ const removeEssay = async (req, res) => {
   }
 };
 
+// Update other methods to invalidate cache when data changes...
 const addTagToEssay = async (req, res) => {
   try {
     const { essayId } = req.params;
     const { tag } = req.body;
+    const userId = req.user.userId;
 
     const essayDoc = await essaysCollection.doc(essayId).get();
     
-    if (!essayDoc.exists || essayDoc.data().userId !== req.user.userId) {
+    if (!essayDoc.exists || essayDoc.data().userId !== userId) {
       return res.status(404).json({ error: 'Essay not found' });
     }
 
@@ -217,6 +269,9 @@ const addTagToEssay = async (req, res) => {
       await essaysCollection.doc(essayId).update({
         tags: admin.firestore.FieldValue.arrayUnion(tag)
       });
+      
+      // Invalidate cache after tag addition
+      await invalidateUserCache(userId);
     }
 
     res.json({ success: true, message: 'Tag added successfully' });
@@ -226,20 +281,28 @@ const addTagToEssay = async (req, res) => {
   }
 };
 
+// Include all other existing functions...
+const getHealthCheck = (req, res) => {
+  res.json({ status: 'OK', message: 'online' });
+};
+
 const removeTagFromEssay = async (req, res) => {
   try {
     const { essayId } = req.params;
     const { tag } = req.body;
+    const userId = req.user.userId;
 
     const essayDoc = await essaysCollection.doc(essayId).get();
     
-    if (!essayDoc.exists || essayDoc.data().userId !== req.user.userId) {
+    if (!essayDoc.exists || essayDoc.data().userId !== userId) {
       return res.status(404).json({ error: 'Essay not found' });
     }
 
     await essaysCollection.doc(essayId).update({
       tags: admin.firestore.FieldValue.arrayRemove(tag)
     });
+
+    await invalidateUserCache(userId);
 
     res.json({ success: true, message: 'Tag removed successfully' });
   } catch (error) {
@@ -252,10 +315,11 @@ const updateEssayTheme = async (req, res) => {
   try {
     const { essayId } = req.params;
     const { theme } = req.body;
+    const userId = req.user.userId;
 
     const essayDoc = await essaysCollection.doc(essayId).get();
     
-    if (!essayDoc.exists || essayDoc.data().userId !== req.user.userId) {
+    if (!essayDoc.exists || essayDoc.data().userId !== userId) {
       return res.status(404).json({ error: 'Essay not found' });
     }
 
@@ -263,6 +327,8 @@ const updateEssayTheme = async (req, res) => {
       theme: theme,
       lastModified: admin.firestore.FieldValue.serverTimestamp()
     });
+
+    await invalidateUserCache(userId);
 
     res.json({ success: true, message: 'Theme updated successfully' });
   } catch (error) {
@@ -272,21 +338,8 @@ const updateEssayTheme = async (req, res) => {
 };
 
 function extractDocId(url) {
-  const patterns = [
-    /\/document\/d\/([a-zA-Z0-9-_]+)/,                  // normal link
-    /\/document\/d\/([a-zA-Z0-9-_]+)\/edit/,            // edit link
-    /docs\.google\.com\/document\/d\/([a-zA-Z0-9-_]+)/, // full link
-    /^([a-zA-Z0-9-_]+)$/                                // id only
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) {
-      return match[1];
-    }
-  }
-  
-  return null;
+  const match = url.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+  return match ? match[1] : null;
 }
 
 // Helper function to calculate stats without storing content
@@ -316,6 +369,7 @@ const updateEssayApplication = async (req, res) => {
   try {
     const { essayId } = req.params;
     const { applicationFor, applicationStatus } = req.body;
+    const userId = req.user.userId;
 
     const essayRef = essaysCollection.doc(essayId);
     const essayDoc = await essayRef.get();
@@ -324,7 +378,7 @@ const updateEssayApplication = async (req, res) => {
       return res.status(404).json({ error: 'Essay not found' });
     }
 
-    if (essayDoc.data().userId !== req.user.userId) {
+    if (essayDoc.data().userId !== userId) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
@@ -333,6 +387,8 @@ const updateEssayApplication = async (req, res) => {
     if (applicationStatus !== undefined) updateData.applicationStatus = applicationStatus;
 
     await essayRef.update(updateData);
+    await invalidateUserCache(userId);
+    
     res.json({ message: 'Essay application info updated successfully' });
   } catch (error) {
     console.error('Error updating essay application:', error);
@@ -344,6 +400,7 @@ const updateEssayNotes = async (req, res) => {
   try {
     const { essayId } = req.params;
     const { notes } = req.body;
+    const userId = req.user.userId;
 
     const essayRef = essaysCollection.doc(essayId);
     const essayDoc = await essayRef.get();
@@ -352,15 +409,21 @@ const updateEssayNotes = async (req, res) => {
       return res.status(404).json({ error: 'Essay not found' });
     }
 
-    if (essayDoc.data().userId !== req.user.userId) {
+    if (essayDoc.data().userId !== userId) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    await essayRef.update({ notes: notes || '' });
-    res.json({ message: 'Essay notes updated successfully' });
+    await essayRef.update({
+      notes: notes,
+      lastModified: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    await invalidateUserCache(userId);
+
+    res.json({ message: 'Notes updated successfully' });
   } catch (error) {
-    console.error('Error updating essay notes:', error);
-    res.status(500).json({ error: 'Failed to update essay notes' });
+    console.error('Error updating notes:', error);
+    res.status(500).json({ error: 'Failed to update notes' });
   }
 };
 
@@ -373,5 +436,7 @@ module.exports = {
   removeTagFromEssay,
   updateEssayTheme,
   updateEssayApplication,
-  updateEssayNotes
+  updateEssayNotes,
+  extractDocId,
+  invalidateUserCache
 };

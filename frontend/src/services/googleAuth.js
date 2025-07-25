@@ -2,6 +2,7 @@ export class GoogleAuthService {
   constructor() {
     this.clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     this.redirectUri = `${window.location.origin}/auth/callback`;
+    this.backendUrl = import.meta.env.VITE_BACKEND_URL;
   }
 
   generateCodeChallenge() {
@@ -72,7 +73,7 @@ export class GoogleAuthService {
 
     const codeVerifier = sessionStorage.getItem('code_verifier');
     
-    const response = await fetch('/api/auth/exchange-code', {
+    const response = await fetch(`${this.backendUrl}/auth/exchange-code`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -96,7 +97,7 @@ export class GoogleAuthService {
   }
 
   signOut() {
-    return fetch('/api/auth/logout', {
+    return fetch(`${this.backendUrl}/auth/logout`, {
       method: 'POST',
       credentials: 'include'
     });
