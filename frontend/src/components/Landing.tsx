@@ -28,7 +28,6 @@ interface Doodle {
 }
 
 export default function Landing({ onUserChange }: LandingProps) {
-  const [loading, setLoading] = useState(false);
   const [doodles, setDoodles] = useState<Doodle[]>([]);
 
   useEffect(() => {
@@ -73,13 +72,10 @@ export default function Landing({ onUserChange }: LandingProps) {
 
   const handleLogin = async () => {
     try {
-      setLoading(true);
       await googleAuth.signIn();
     } catch (error) {
       console.error("Error logging in:", error);
       alert("Failed to start login process");
-    } finally {
-      setLoading(false);
     }
   };
 
