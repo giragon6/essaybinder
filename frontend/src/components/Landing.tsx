@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 // @ts-ignore
 import { googleAuth } from '../services/googleAuth';
 import EssayCard from "./EssayCard";
+import googleLogo from '../assets/drawn_google.png';
+import dots from '../assets/dots.png';
+import pencil from '../assets/pencil.png';
+import pen from '../assets/pen.png';
 
 interface User {
   id: string;
@@ -33,7 +37,7 @@ export default function Landing({ onUserChange }: LandingProps) {
   }, []);
 
   const generateRandomDoodles = () => {
-    const doodleFiles = ['/dots.png', '/pen.png', '/pencil.png'];
+    const doodleFiles = [dots, pen, pencil];
     const numDoodles = Math.floor(Math.random() * 4) + 1;
     const newDoodles: Doodle[] = [];
 
@@ -213,12 +217,12 @@ export default function Landing({ onUserChange }: LandingProps) {
           <div className="flex items-center justify-center mr-4 mt-10">
             <span className="font-bold text-gray-500 transform -rotate-12 text-3xl">get started</span>
             <span className="text-gray-500 ml-2 mr-4 transform rotate-12 text-3xl">→</span>
-            <button 
+            <img 
               onClick={handleLogin}
-              disabled={loading}
               className="google-logo h-25 mr-20 w-25"
+              src={googleLogo}
             >
-            </button>
+            </img>
           </div>
 
       </div>

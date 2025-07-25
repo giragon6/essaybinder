@@ -330,7 +330,7 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplic
                       }
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex-1 text-gray-500 border-none outline-none focus:outline-none focus:ring-0 bg-transparent"
+                    className="w-full p-3 text-gray-500 !border-none !outline-none !focus:outline-none !focus:ring-0 !bg-transparent !focus:bg-transparent"
                   />
                 </div>
               </div>

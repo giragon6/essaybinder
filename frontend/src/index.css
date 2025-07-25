@@ -93,7 +93,6 @@
   }
 
   .google-logo {
-    background-image: url("drawn_google.png");
     background-size: contain;
     cursor: pointer;
     transition: all 0.3s ease;
