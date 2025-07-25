@@ -2,8 +2,6 @@ import { useState, useCallback } from 'react';
 import type { Essay } from '../models/essayModels';
 
 export const useEssays = () => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
   const [essays, setEssays] = useState<Essay[]>([]);
   const [loading, setLoading] = useState(false);
   const [addingEssay, setAddingEssay] = useState(false);
@@ -12,7 +10,7 @@ export const useEssays = () => {
   const fetchEssays = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${backendUrl}/essays`, {
+      const response = await fetch(`/api/essays`, {
         credentials: 'include'
       });
       
@@ -31,7 +29,7 @@ export const useEssays = () => {
     if (!newDocUrl.trim()) return;
     setAddingEssay(true);
     try {
-      const response = await fetch(`${backendUrl}/essays/add`, {
+      const response = await fetch(`/api/essays/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -63,7 +61,7 @@ export const useEssays = () => {
     }
     
     try {
-      const response = await fetch(`${backendUrl}/essays/${essayId}`, {
+      const response = await fetch(`/api/essays/${essayId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -81,7 +79,7 @@ export const useEssays = () => {
 
   const addTagToEssay = useCallback(async (essayId: string, tag: string) => {
     try {
-      const response = await fetch(`${backendUrl}/essays/${essayId}/tags`, {
+      const response = await fetch(`/api/essays/${essayId}/tags`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -100,7 +98,7 @@ export const useEssays = () => {
 
   const removeTagFromEssay = useCallback(async (essayId: string, tag: string) => {
     try {
-      const response = await fetch(`${backendUrl}/essays/${essayId}/tags`, {
+      const response = await fetch(`/api/essays/${essayId}/tags`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
@@ -119,7 +117,7 @@ export const useEssays = () => {
 
   const updateEssayApplication = useCallback(async (essayId: string, applicationFor: string, applicationStatus: string) => {
     try {
-      const response = await fetch(`${backendUrl}/essays/${essayId}/application`, {
+      const response = await fetch(`/api/essays/${essayId}/application`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -138,7 +136,7 @@ export const useEssays = () => {
 
   const updateEssayNotes = useCallback(async (essayId: string, notes: string) => {
     try {
-      const response = await fetch(`${backendUrl}/essays/${essayId}/notes`, {
+      const response = await fetch(`/api/essays/${essayId}/notes`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

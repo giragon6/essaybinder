@@ -24,8 +24,6 @@ interface Doodle {
 }
 
 export default function Landing({ onUserChange }: LandingProps) {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
   const [loading, setLoading] = useState(false);
   const [doodles, setDoodles] = useState<Doodle[]>([]);
 
@@ -56,7 +54,7 @@ export default function Landing({ onUserChange }: LandingProps) {
 
   const checkCurrentUser = async () => {
     try {
-      const response = await fetch(`${backendUrl}/auth/user`, {
+      const response = await fetch(`/api/auth/user`, {
         credentials: 'include'
       });
       

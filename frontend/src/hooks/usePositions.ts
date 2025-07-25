@@ -2,14 +2,12 @@ import { useState, useCallback } from 'react';
 import type { UserPositions, EssayPosition } from '../models/essayModels';
 
 export const usePositions = () => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
   const [essayPositions, setEssayPositions] = useState<UserPositions>({});
   const [hasUnsavedPositions, setHasUnsavedPositions] = useState(false);
 
   const fetchPositions = useCallback(async () => {
     try {
-      const response = await fetch(`${backendUrl}/positions`, {
+      const response = await fetch('/api/positions', {
         credentials: 'include'
       });
       
@@ -24,7 +22,7 @@ export const usePositions = () => {
 
   const savePositions = useCallback(async () => {
     try {
-      const response = await fetch(`${backendUrl}/positions`, {
+      const response = await fetch('/api/positions', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

@@ -2,8 +2,6 @@ import { useState, useCallback } from 'react';
 import type { UserProfile } from '../models/essayModels';
 
 export const useAuth = () => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
   const [user, setUser] = useState<UserProfile | null>(null);
 
   const handleUserChange = useCallback((newUser: UserProfile | null) => {
@@ -12,7 +10,7 @@ export const useAuth = () => {
 
   const handleLogout = useCallback(async () => {
     try {
-      const response = await fetch(`${backendUrl}/auth/logout`, {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       });
@@ -29,7 +27,7 @@ export const useAuth = () => {
 
   const checkCurrentUser = useCallback(async () => {
     try {
-      const response = await fetch(`${backendUrl}/auth/user`, {
+      const response = await fetch(`/api/auth/user`, {
         credentials: 'include'
       });
       
