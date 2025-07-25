@@ -72,7 +72,7 @@ export class GoogleAuthService {
 
     const codeVerifier = sessionStorage.getItem('code_verifier');
     
-    const response = await fetch('/api/auth/exchange-code', {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/exchange-code`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -96,7 +96,7 @@ export class GoogleAuthService {
   }
 
   signOut() {
-    return fetch('/api/auth/logout', {
+    return fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/logout`, {
       method: 'POST',
       credentials: 'include'
     });

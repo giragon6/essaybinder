@@ -7,7 +7,7 @@ export const usePositions = () => {
 
   const fetchPositions = useCallback(async () => {
     try {
-      const response = await fetch('/api/positions', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/positions`, {
         credentials: 'include'
       });
       
@@ -22,7 +22,7 @@ export const usePositions = () => {
 
   const savePositions = useCallback(async () => {
     try {
-      const response = await fetch('/api/positions', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/positions`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
