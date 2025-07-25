@@ -3,7 +3,7 @@ import type { EssayCardProps } from "../models/essayModels";
 import { getTagStickerClasses } from "../utils/tagColors";
 import "./StickyNote.css";
 
-export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplication, onUpdateNotes, onPositionChange }: EssayCardProps) {
+export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplication, onUpdateNotes }: EssayCardProps) {
   const [newTag, setNewTag] = useState("");
   const [isFlipped, setIsFlipped] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -57,6 +57,18 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplic
   const colorIndex = essay.id.charCodeAt(essay.id.length - 1) % colors.length;
   const stickyColor = colors[colorIndex];
 
+  const thumbtackColors = [
+    { bg: 'bg-red-500', border: 'border-red-600', inner: 'bg-red-700' },
+    { bg: 'bg-blue-500', border: 'border-blue-600', inner: 'bg-blue-700' },
+    { bg: 'bg-green-500', border: 'border-green-600', inner: 'bg-green-700' },
+    { bg: 'bg-purple-500', border: 'border-purple-600', inner: 'bg-purple-700' },
+    { bg: 'bg-orange-500', border: 'border-orange-600', inner: 'bg-orange-700' },
+    { bg: 'bg-pink-500', border: 'border-pink-600', inner: 'bg-pink-700' },
+  ];
+  
+  const thumbtackColorIndex = Math.floor(Math.random() * thumbtackColors.length);
+  const thumbtackColor = thumbtackColors[thumbtackColorIndex];
+
   return (
     <div className="square">
       <div 
@@ -88,7 +100,11 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplic
         }}
         onClick={() => !isDragging && setIsFlipped(!isFlipped)}
       >
-        
+        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10">
+          <div className={`w-4 h-4 ${thumbtackColor.bg} rounded-full shadow-lg border-2 ${thumbtackColor.border} relative`}>
+            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 ${thumbtackColor.inner} rounded-full`}></div>
+          </div>
+        </div>
 
         {!isFlipped ? (
           <div className="h-full flex flex-col">
@@ -152,16 +168,14 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplic
             </div>
           </div>
         ) : (
-          /* Back of sticky note - Application, Notes, and Tag management */
-          <div className="h-full flex flex-col text-sm">
+          <div className="h-full flex flex-col text-sm ">
             <div className="flex items-center justify-between mb-3">
-              <h5 className="text-base font-bold text-gray-800">✏️ Edit Details</h5>
+              <h5 className="text-base font-bold text-gray-800">Edit Details</h5>
               <span className="text-xs text-gray-600">Click to flip back</span>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3">
-              {/* Application Section */}
-              <div className="bg-white bg-opacity-60 rounded p-2 border border-gray-300">
+            <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide">
+              <div className="">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-gray-800">🎓 Application</span>
                   <button
@@ -215,7 +229,7 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplic
                 ) : (
                   <div className="text-xs text-gray-700">
                     {essay.applicationFor ? (
-                      <div>📍 {essay.applicationFor}</div>
+                      <div>Written for: {essay.applicationFor}</div>
                     ) : (
                       <div className="italic text-gray-500">No application set</div>
                     )}
@@ -226,10 +240,9 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplic
                 )}
               </div>
 
-              {/* Notes Section */}
-              <div className="bg-white bg-opacity-60 rounded p-2 border border-gray-300">
+              <div className="">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-800">📝 Personal Notes</span>
+                  <span className="font-medium text-gray-800">Personal Notes</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -277,9 +290,9 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplic
                 )}
               </div>
 
-               <div className="bg-white bg-opacity-60 rounded p-2 border border-gray-300">
-                <div className="font-medium text-gray-800 mb-2">🏷️ Tags</div>
-                <div className="space-y-1 mb-2 max-h-16 overflow-y-auto">
+               <div className="">
+                <div className="font-medium text-gray-800 mb-2">Tags</div>
+                <div className="space-y-1 mb-2 max-h-16 overflow-y-auto scrollbar-hide">
                   {essay.tags.length > 0 ? essay.tags.map((tag) => (
                     <div 
                       key={tag}
@@ -317,17 +330,8 @@ export default function EssayCard({ essay, onAddTag, onRemoveTag, onUpdateApplic
                       }
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex-1 p-1 border border-gray-300 rounded text-xs bg-white"
+                    className="flex-1 text-gray-500 border-none outline-none focus:outline-none focus:ring-0 bg-transparent"
                   />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddTag();
-                    }}
-                    className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
-                  >
-                    ➕
-                  </button>
                 </div>
               </div>
             </div>

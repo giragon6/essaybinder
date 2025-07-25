@@ -8,9 +8,7 @@ interface EssayHeaderProps {
 }
 
 export default function EssayHeader({ 
-  userName, 
-  essayCount, 
-  totalEssays, 
+  userName,
   hasUnsavedPositions, 
   onLogout, 
   onSavePositions 
@@ -34,23 +32,24 @@ export default function EssayHeader({
         </h2>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          {totalEssays > 0 && (
-            <div className="text-sm transform rotate-1 text-slate-600">
-              I have <span className="text-amber-600">{totalEssays} essay{totalEssays > 1 ? 's' : ''}</span>!
-            </div>
-          )}
-          {hasUnsavedPositions && (
-            <button
-              onClick={onSavePositions}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all transform hover:scale-105 flex items-center gap-2"
-            >
-              💾 Save Positions
-            </button>
-          )}
-        </div>
+    { hasUnsavedPositions && <div 
+      className={'fixed bottom-8 right-32 z-50 bg-gray-200 transition-all duration-300 border-4 border-gray-400'}
+      style={{
+        width: '80px',
+        height: '80px',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+      }}
+      onClick={onSavePositions}
+      title="Click here to save current essay position"
+    >
+      <div className={'text-3xl transition-all duration-200'}>
+        💾
       </div>
+    </div>}
     </>
   );
 }

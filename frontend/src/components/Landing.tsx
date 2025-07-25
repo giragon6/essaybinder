@@ -14,12 +14,43 @@ interface LandingProps {
   onUserChange: (user: User | null) => void;
 }
 
+interface Doodle {
+  src: string;
+  x: number;
+  y: number;
+  rotation: number;
+  opacity: number;
+  size: number;
+}
+
 export default function Landing({ onUserChange }: LandingProps) {
   const [loading, setLoading] = useState(false);
+  const [doodles, setDoodles] = useState<Doodle[]>([]);
 
   useEffect(() => {
     checkCurrentUser();
+    generateRandomDoodles();
   }, []);
+
+  const generateRandomDoodles = () => {
+    const doodleFiles = ['/dots.png', '/pen.png', '/pencil.png'];
+    const numDoodles = Math.floor(Math.random() * 4) + 1;
+    const newDoodles: Doodle[] = [];
+
+    for (let i = 0; i < numDoodles; i++) {
+      const randomFile = doodleFiles[Math.floor(Math.random() * doodleFiles.length)];
+      newDoodles.push({
+        src: randomFile,
+        x: Math.random() * 80 + 10, 
+        y: Math.random() * 70 + 15, 
+        rotation: Math.random() * 360 - 180, 
+        opacity: Math.random() * 0.3 + 0.1, 
+        size: Math.random() * 60 + 40 
+      });
+    }
+
+    setDoodles(newDoodles);
+  };
 
   const checkCurrentUser = async () => {
     try {
@@ -50,7 +81,26 @@ export default function Landing({ onUserChange }: LandingProps) {
 
   return (
     <div className="min-h-screen relative paper-background">
+      {/* Left margin line */}
       <div className="absolute left-16 top-0 bottom-0 w-0.5 bg-red-300 opacity-60"></div>
+      
+      {/* Random doodles */}
+      {doodles.map((doodle, index) => (
+        <img
+          key={index}
+          src={doodle.src}
+          alt="doodle"
+          className="absolute pointer-events-none z-0"
+          style={{
+            left: `${doodle.x}%`,
+            top: `${doodle.y}%`,
+            transform: `rotate(${doodle.rotation}deg)`,
+            opacity: doodle.opacity,
+            width: `${doodle.size}px`,
+            height: `${doodle.size}px`,
+          }}
+        />
+      ))}
       
       <div className="relative z-10 p-6 mx-auto ml-20">
         <div className="mb-16 flex flex-col items-start">
@@ -156,17 +206,21 @@ export default function Landing({ onUserChange }: LandingProps) {
         </div>
         <div className="flex justify-center">
             <p className="text-gray-700 text-4xl font-bold font-serif">
-              Reusing application essays has <span className="text-purple-400" style={{fontFamily: 'Caveat, cursive'}}>never been easier!</span>
+              Reusing application essays has <span className="text-purple-400 underline-offset-2 underline decoration-1" style={{fontFamily: 'Caveat, cursive'}}>never been easier!</span>
             </p>
           </div>
 
-          <button 
-            onClick={handleLogin}
-            disabled={loading}
-            className="inline-block px-6 py-3 text-lg transition-all transform hover:scale-105 text-white cursor-pointer border-none disabled:opacity-50"
-          >
-            {loading ? 'Redirecting...' : 'Sign in with Google'}
-          </button>
+          <div className="flex items-center justify-center mr-4 mt-10">
+            <span className="font-bold text-gray-500 transform -rotate-12 text-3xl">get started</span>
+            <span className="text-gray-500 ml-2 mr-4 transform rotate-12 text-3xl">→</span>
+            <button 
+              onClick={handleLogin}
+              disabled={loading}
+              className="google-logo h-25 mr-20 w-25"
+            >
+            </button>
+          </div>
+
       </div>
     </div>
   );

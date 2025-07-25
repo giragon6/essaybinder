@@ -24,7 +24,6 @@ export default function TrashCan({ onDropEssay }: TrashCanProps) {
     
     const essayId = e.dataTransfer.getData('text/plain');
     if (essayId) {
-      // Show confirmation dialog before deleting
       if (window.confirm("Remove this essay from your catalog? This won't delete the Google Doc.")) {
         onDropEssay(essayId);
       }

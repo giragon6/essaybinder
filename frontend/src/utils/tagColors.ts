@@ -32,5 +32,5 @@ export const hashStringToColor = (str: string): string => {
 
 export const getTagStickerClasses = (tagName: string): string => {
   const baseColor = hashStringToColor(tagName);
-  return `${baseColor} rounded-full px-3 py-1 text-xs font-bold transform hover:scale-105 transition-all duration-150 cursor-default border-2 border-gray-100`;
+  return `${baseColor} rounded-full px-3 py-1 text-xs font-bold transform scale-95 hover:scale-100 transition-all duration-150 cursor-default border-2`;
 };

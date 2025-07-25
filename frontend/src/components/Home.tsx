@@ -89,7 +89,7 @@ export default function Home() {
   });
 
   return user ? (
-    <div className="min-h-screen min-w-screen relative paper-background top-0">
+    <div className="min-h-screen relative paper-background top-0">
       <div className="absolute left-16 top-0 bottom-0 w-0.5 bg-red-300 opacity-60"></div>
       
       <div className="relative z-10 p-6 max-w-7xl ml-20 mr-0 pt-0">
@@ -128,7 +128,7 @@ export default function Home() {
         </div>
 
         <div className="relative">
-          <div className="mt-30 left-32 z-10">
+          <div className="mt-40 left-32 z-10">
             <AddEssayForm
               newDocUrl={newDocUrl}
               setNewDocUrl={setNewDocUrl}
@@ -138,7 +138,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Main content area for essays */}
         <div className="mt-48 relative z-5">
 
           <div className="mb-6">
@@ -158,16 +157,8 @@ export default function Home() {
                   <div className="transform -rotate-1">
                     <div className="text-6xl mb-4">📄</div>
                     <p className="text-xl mb-4 text-slate-600 ">
-                      No essays in your collection yet
+                      No essays yet
                     </p>
-                    <p className="mb-6 transform rotate-1 text-gray-400 ">
-                      Start building your personal essay library!
-                    </p>
-                    <div className="text-sm space-y-1 text-gray-400 ">
-                      <p>💡 Add any Google Docs essay URL above</p>
-                      <p>🏷️ Tag and organize your collection</p>
-                      <p>🔍 Search and filter with ease</p>
-                    </div>
                   </div>
                 ) : (
                   <div className="transform rotate-1">

@@ -55,30 +55,30 @@ export function Filters(props: FiltersProps ) {
 
   return (
     <>
-      <div className="mb-8 min-w-screen">
-        <div className="flex items-center gap-4 mb-4">
+      <div className="my-8 w-full min-w-[80vw]">
+        <div className="flex items-center gap-4 max-w-full">
           <div 
-            className={`tape-roll ${showFilters ? 'spinning' : ''} tape-roll-size flex-shrink-0`}
+            className={`tape-roll ${showFilters ? 'spinning' : ''} tape-roll-size flex-shrink-0 mr-5 mb-2`}
             onClick={() => setShowFilters(!showFilters)}
           >
           </div>
 
-          <div className={`active-filters flex-grow ${!searchTerm && selectedTags.length === 0 && !minWordCount && !maxWordCount && !minCharCount && !maxCharCount && !selectedApplicationStatus ? 'empty' : ''}`}>
+          <div className={`active-filters flex-1 max-w-full overflow-x-auto ${!searchTerm && selectedTags.length === 0 && !minWordCount && !maxWordCount && !minCharCount && !maxCharCount && !selectedApplicationStatus ? 'empty' : ''}`}>
             {searchTerm && (
               <div className="tape-piece new-tape">
-                🔎 "{searchTerm}"
+                "{searchTerm}"
                 <span className="remove-tape" onClick={() => setSearchTerm("")}>×</span>
               </div>
             )}
             {selectedTags.map(tag => (
               <div key={tag} className="tape-piece new-tape">
-                🏷️ {tag}
+                {tag}
                 <span className="remove-tape" onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))}>×</span>
               </div>
             ))}
             {selectedTags.length > 1 && (
               <div className="tape-piece new-tape">
-                🔗 {tagSearchMode} mode
+                {tagSearchMode} mode
                 <span className="remove-tape" onClick={() => setTagSearchMode(tagSearchMode === 'OR' ? 'AND' : 'OR')}>⇄</span>
               </div>
             )}
@@ -90,13 +90,13 @@ export function Filters(props: FiltersProps ) {
             )}
             {(minWordCount || maxWordCount) && (
               <div className="tape-piece new-tape">
-                📊 Words: {minWordCount || '0'}-{maxWordCount || '∞'}
+                Words: {minWordCount || '0'}-{maxWordCount || '∞'}
                 <span className="remove-tape" onClick={() => { setMinWordCount(""); setMaxWordCount(""); }}>×</span>
               </div>
             )}
             {(minCharCount || maxCharCount) && (
               <div className="tape-piece new-tape">
-                🔤 Chars: {minCharCount || '0'}-{maxCharCount || '∞'}
+                Chars: {minCharCount || '0'}-{maxCharCount || '∞'}
                 <span className="remove-tape" onClick={() => { setMinCharCount(""); setMaxCharCount(""); }}>×</span>
               </div>
             )}
@@ -107,7 +107,7 @@ export function Filters(props: FiltersProps ) {
           <div className="tape-menu">
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-700 ">
-                🔎 Search Essays
+                Search Essays
               </label>
               <input
                 type="text"
@@ -119,8 +119,8 @@ export function Filters(props: FiltersProps ) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700 ">
-                🎓 Filter by Application Status
+              <label className="block text-sm font-medium my-2 text-gray-700">
+                Filter by Application Status
               </label>
               <select
                 value={selectedApplicationStatus}
@@ -137,26 +137,26 @@ export function Filters(props: FiltersProps ) {
               </select>
             </div>
 
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
+            <div className="my-4">
+              <div className="flex items-center justify-between my-2">
                 <label className="block text-sm font-medium text-gray-700 ">
-                  🏷️ Filter by Tags
+                  Filter by Tags
                 </label>
                 {selectedTags.length > 1 && (
                   <button
                     onClick={() => setTagSearchMode(tagSearchMode === 'OR' ? 'AND' : 'OR')}
-                    className={`px-3 py-1 text-sm rounded-lg  transition-all transform hover:scale-105 ${
+                    className={`px-3 py-1 text-sm rounded-lg !transition-all transform hover:scale-105 ${
                       tagSearchMode === 'OR' 
                         ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-2 border-blue-300' 
                         : 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-2 border-purple-300'
                     }`}
                     title={tagSearchMode === 'OR' ? 'Show essays with ANY selected tag' : 'Show essays with ALL selected tags'}
                   >
-                    {tagSearchMode === 'OR' ? '🔗 Any tag (OR)' : '🔒 All tags (AND)'}
+                    {tagSearchMode === 'OR' ? 'Any selected tag (OR)' : 'All selected tags (AND)'}
                   </button>
                 )}
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 max-h-32 overflow-y-auto p-2 border-2 border-dashed border-amber-300 rounded-lg bg-amber-50 bg-opacity-50">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 max-h-32 overflow-y-auto p-2 border-2 border-dashed border-amber-300 rounded-lg bg-amber-50 bg-opacity-50 !text-amber-600">
                 {Array.from(new Set(allTags)).sort().map(tag => (
                   <label key={tag} className="flex items-center space-x-2 cursor-pointer hover:bg-amber-100 p-2 rounded transition-colors">
                     <input
@@ -169,7 +169,7 @@ export function Filters(props: FiltersProps ) {
                           setSelectedTags(selectedTags.filter(t => t !== tag));
                         }
                       }}
-                      className="w-4 h-4 text-amber-600 border-2 border-amber-600 rounded focus:ring-amber-500"
+                      className="w-4 h-4 border-2 border-amber-600 rounded focus:ring-amber-500"
                     />
                     <span className="text-sm  truncate">{tag}</span>
                   </label>
@@ -180,10 +180,9 @@ export function Filters(props: FiltersProps ) {
               </div>
             </div>
 
-            {/* Word and Character Count Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 ">
+                <label className="block text-sm font-medium my-2 text-gray-700 ">
                    Word Count Range
                 </label>
                 <div className="flex gap-2">
@@ -205,8 +204,8 @@ export function Filters(props: FiltersProps ) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 ">
-                  🔤 Character Count Range
+                <label className="block text-sm font-medium my-2 text-gray-700 ">
+                  Character Count Range
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -232,7 +231,7 @@ export function Filters(props: FiltersProps ) {
                 onClick={clearFilters}
                 className="px-6 py-2 rounded-lg transition-all transform hover:scale-105 text-white bg-gray-500 "
               >
-                🗑️ Clear All Filters
+                Clear All Filters
               </button>
             </div>
           </div>

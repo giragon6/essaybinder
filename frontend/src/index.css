@@ -27,7 +27,82 @@
       );
     width: 100%;
   }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  input, select, textarea {
+    color: #1f2937 !important; 
+    background-color: #ffffff !important; 
+  }
+
+  input::placeholder {
+    color: #6b7280 !important; 
+    opacity: 1;
+  }
+
+  select option {
+    color: #1f2937 !important; 
+    background-color: #ffffff !important; 
+  }
+
+  input:focus, select:focus, textarea:focus {
+    color: #1f2937 !important;
+    background-color: #ffffff;
+  }
+
+  input[type="checkbox"] {
+    appearance: none !important;
+    background-color: #ffffff !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 4px !important;
+    width: 16px !important;
+    height: 16px !important;
+    position: relative !important;
+    cursor: pointer !important;
+  }
+
+  input[type="checkbox"]:checked {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+  }
+
+  input[type="checkbox"]:checked::after {
+    content: "✓" !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: 1px !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+  }
+
+  input[type="checkbox"]:focus {
+    outline: 2px solid #3b82f6 !important;
+    outline-offset: 2px !important;
+  }
+
+  input[type="checkbox"]:hover {
+    border-color: #9ca3af !important;
+  }
+
+  .scrollbar-hide {
+      -ms-overflow-style: none;  
+      scrollbar-width: none; 
+  }
+
+  .google-logo {
+    background-image: url("drawn_google.png");
+    background-size: contain;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  } 
   
+  .google-logo:hover {
+    transform: scale(1.2);
+  }
+
   .user-menu-shadow {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   }
@@ -95,7 +170,7 @@
     font-style: italic;
     font-size: small;
     font-family: Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    color: #5b5b5b;
+    color: rgb(100, 29, 29);
   }
   
   .whiteout-container:hover .whiteout-overlay {
